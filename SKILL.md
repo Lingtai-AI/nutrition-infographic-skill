@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via Codex built-in imagegen or deterministic Pillow fallback.
-version: 1.2.0
+version: 1.3.0
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -10,6 +10,10 @@ tags: [python, nutrition, infographic, image-generation, workflow]
 This skill creates nutrition/science infographic images. The **default workflow is consultative**: ask the human what kind of image they need before generating anything, unless they already supplied enough detail or explicitly asked for a demo.
 
 Recommended generation route in Codex environments: ask Codex CLI / Codex's built-in `imagegen` system skill to use the built-in `image_gen` tool, then copy the generated PNG into the requested project path. The deterministic Pillow renderer remains the fallback for exact chart geometry, repeatability, offline rendering, or fast drafts.
+
+## Self-contained usage
+
+This repository is self-contained. When cloned, run commands from the repository root (the directory containing `SKILL.md`). Do not assume the skill lives at `.library/custom/nutrition-infographic`; examples below use relative paths such as `scripts/render_nutrition_infographic.py` and `assets/demo-balanced-plate.json`. If you copy this skill into LingTai's `.library/custom/` or `.library_shared/`, the same relative paths still work when your shell is inside the skill directory.
 
 ## When this applies
 
@@ -123,23 +127,68 @@ The Pillow fallback uses the original subset: `title`, `subtitle`, `theme`, `bac
 6. **Iterate.** If text or numbers are wrong in GPT image output, simplify the prompt/spec or switch to Pillow for the data layer.
 7. **Deliver.** Send or attach the image on the same channel where the request arrived if possible, and mention assumptions used.
 
-## Codex built-in imagegen route
+## Codex CLI built-in imagegen route
 
-From the agent workdir, write a JSON spec or prompt file and use Codex CLI as the default GPT image route:
+Use this when you are in a Codex-capable environment and want a polished GPT-generated visual. The skill's job is to teach the agent how to call **command-line Codex** so Codex can invoke its own system `imagegen` skill / `image_gen` tool.
+
+### Step 1 — write a brief/spec file
+
+Create a JSON spec or text prompt in a normal project path, for example:
 
 ```bash
-OUT=/tmp/nutrition-infographic.png
-codex exec --cd "$PWD" "Use the system imagegen skill. Read /tmp/nutrition-spec.json, generate a polished nutrition infographic with the built-in image_gen tool, then copy the generated PNG from \$CODEX_HOME/generated_images/<session>/ to $OUT ; do not use the OpenAI API fallback script."
+cat > /tmp/nutrition-spec.json <<'JSON'
+{
+  "title": "早餐怎么搭配更稳",
+  "subtitle": "高纤维 + 优质蛋白 + 慢碳水 · 科普示意",
+  "audience": "general adults",
+  "language": "Simplified Chinese",
+  "canvas": {"size": "1024x1024", "aspect": "1:1"},
+  "style": "clean warm WeChat health education card",
+  "plate": [
+    {"label": "蔬果", "value": 40, "color": "green"},
+    {"label": "蛋白质", "value": 30, "color": "orange"},
+    {"label": "全谷物", "value": 30, "color": "yellow"}
+  ],
+  "tips": ["先吃蛋白和蔬果", "主食优先全谷物", "少喝含糖饮料"],
+  "footer": "科普示意，不替代医生或注册营养师建议"
+}
+JSON
 ```
 
-If the human did not provide data, create a draft spec with reasonable placeholder values and clearly mark it as educational/illustrative. If they provide exact values, preserve them.
+### Step 2 — run `codex exec`
+
+Set an output path, then ask Codex to use imagegen and copy the generated PNG to that path:
+
+```bash
+OUT="$PWD/generated/nutrition-breakfast.png"
+mkdir -p "$(dirname "$OUT")"
+
+codex exec --cd "$PWD" "Use the system imagegen skill. Read /tmp/nutrition-spec.json. Generate one polished square nutrition infographic PNG with the built-in image_gen tool. Preserve the provided Chinese text, numbers, units, and disclaimer as much as image generation allows. After generation, locate the newest PNG under \$CODEX_HOME/generated_images/ and copy it to '$OUT'. Print only the final output path. Do not use the OpenAI API fallback script."
+```
+
+Important details for agents:
+
+- `codex exec` runs a separate Codex session. Put all necessary instructions in the quoted task; do not rely on hidden context.
+- Tell Codex explicitly to use the **system imagegen skill** and the built-in `image_gen` tool.
+- Tell Codex explicitly to copy the final PNG from `$CODEX_HOME/generated_images/...` to your desired `OUT` path. Otherwise the image may remain in Codex's generated-images cache.
+- Escape `$CODEX_HOME` as `\$CODEX_HOME` inside double-quoted shell strings if you want the child Codex session, not your current shell, to expand it.
+- If exact text/numbers are critical, inspect the result. GPT image models can distort text; switch to the Pillow fallback for exact chart labels.
+
+### Step 3 — inspect and deliver
+
+```bash
+file "$OUT"
+# Optional: use your environment's image viewer or vision tool to inspect legibility.
+```
+
+Then send/attach the generated PNG on the same channel where the human asked, if the channel supports media.
 
 ## OpenAI API fallback
 
 Use only when an explicit API path is desired and credentials are available:
 
 ```bash
-python3 .library/custom/nutrition-infographic/scripts/generate_gpt_image.py \
+python3 scripts/generate_gpt_image.py \
   --spec /tmp/spec.json \
   --out /tmp/nutrition-gpt.png
 ```
@@ -147,7 +196,7 @@ python3 .library/custom/nutrition-infographic/scripts/generate_gpt_image.py \
 or:
 
 ```bash
-python3 .library/custom/nutrition-infographic/scripts/generate_gpt_image.py \
+python3 scripts/generate_gpt_image.py \
   --prompt-file /tmp/nutrition-prompt.txt \
   --out /tmp/nutrition-poster.png \
   --model gpt-image-1 \
@@ -161,17 +210,17 @@ Use the deterministic renderer when exact chart proportions, repeatable output, 
 
 ```bash
 # Render demo directly with Pillow
-python3 .library/custom/nutrition-infographic/scripts/render_nutrition_infographic.py \
+python3 scripts/render_nutrition_infographic.py \
   --out /tmp/demo-nutrition.png
 
 # Render a custom spec with fixed canvas size
-python3 .library/custom/nutrition-infographic/scripts/render_nutrition_infographic.py \
+python3 scripts/render_nutrition_infographic.py \
   --spec /tmp/spec.json \
   --out /tmp/card.png \
   --width 1400 --height 1000
 
 # Write a starter spec
-python3 .library/custom/nutrition-infographic/scripts/render_nutrition_infographic.py \
+python3 scripts/render_nutrition_infographic.py \
   --write-demo-spec /tmp/demo-nutrition.json
 ```
 
