@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via available backends such as MiniMax CLI, Codex built-in imagegen, OpenAI Images API, or deterministic Pillow fallback.
-version: 1.4.1
+version: 1.4.2
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -85,10 +85,11 @@ Then choose sensible defaults for the rest and state them before generating.
 
 1. **Human provided a complete brief** → draft JSON spec or rich prompt and generate.
 2. **Human provided only a topic** → ask the minimal intake question; if they say “随便/默认”, proceed with defaults.
-3. **Exact numbers/charts must be correct** → use the Pillow renderer first, or use GPT image only for a decorative companion.
-4. **Polished editorial visual matters more than exact geometry** → use Codex built-in imagegen.
-5. **No imagegen available / offline / reproducible draft needed** → use `scripts/render_nutrition_infographic.py`.
-6. **Medical personalization requested** → keep it educational, ask for professional constraints, include disclaimer; do not invent clinical advice.
+3. **Publication-grade Chinese infographic / exact wording required** → use Pillow/SVG/HTML for the final text/data layer. AI image backends may create a background or illustration, but should not be trusted to render Chinese copy, numbers, units, or disclaimers.
+4. **Exact numbers/charts must be correct** → use the Pillow renderer first, or use AI image only for a decorative companion.
+5. **Polished editorial visual matters more than exact geometry** → use MiniMax/Codex/OpenAI image generation, then inspect text carefully.
+6. **No imagegen available / offline / reproducible draft needed** → use `scripts/render_nutrition_infographic.py`.
+7. **Medical personalization requested** → keep it educational, ask for professional constraints, include disclaimer; do not invent clinical advice.
 
 ## Default brief if the human says “你来定”
 
