@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via available backends such as MiniMax CLI, Codex built-in imagegen, OpenAI Images API, or deterministic Pillow fallback.
-version: 1.4.0
+version: 1.4.1
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -152,18 +152,25 @@ Use this when the environment has the official MiniMax CLI (`mmx`) installed, au
 command -v mmx >/dev/null || npm install -g mmx-cli
 mmx --help
 mmx image generate --help
+mmx config show --output json
+mmx auth status --output json
+mmx quota show --output json
 ```
 
-If the key is in `~/.lingtai-tui/.env`, export it without committing it:
+Prefer the MiniMax CLI's own auth/config (`~/.mmx/config.json`, created by `mmx auth login` or `mmx auth login --method api-key`) rather than blindly reusing a LingTai LLM preset key. A LingTai MiniMax preset may point at an Anthropic-compatible LLM endpoint such as `https://api.minimaxi.com/anthropic`; that key/backend is not necessarily the same credential/region the first-party image API expects.
+
+Only pass `--api-key` explicitly when you know that key belongs to the MiniMax image API and you also know its region. Otherwise let `mmx` use its stored config:
 
 ```bash
-set -a
-[ -f ~/.lingtai-tui/.env ] && . ~/.lingtai-tui/.env
-set +a
-: "${MINIMAX_API_KEY:?MINIMAX_API_KEY missing}"
+# Recommended: use ~/.mmx/config.json as-is.
+mmx image generate --help
+
+# Optional only when you intentionally override auth:
+# mmx --region global --api-key "$MINIMAX_IMAGE_API_KEY" image generate ...
+# mmx --region cn     --api-key "$MINIMAX_IMAGE_API_KEY" image generate ...
 ```
 
-For mainland MiniMax keys, pass `--region cn`. For international keys, omit it or pass `--region global`. A region/key mismatch usually appears as `invalid api key`; exhausted or missing quota may appear as `usage limit exceeded` or `no active token plan subscription`.
+Use `--region cn` for mainland image API keys and `--region global` (or no region flag) for international/token-plan keys. A region/key mismatch usually appears as `invalid api key`; exhausted or missing quota may appear as `usage limit exceeded` or `no active token plan subscription`. If `mmx quota show` lists `image-01` remaining quota, the image backend is likely configured correctly.
 
 ### Step 2 — generate an image
 
@@ -171,7 +178,7 @@ For mainland MiniMax keys, pass `--region cn`. For international keys, omit it o
 mkdir -p generated
 PROMPT='一张方形中文营养学科普信息图，主题：早餐怎么搭配更稳。干净温暖的微信健康科普卡片风格，高对比度，可读中文标题。包含三块：高纤维蔬果、优质蛋白、慢碳水。页脚：科普示意，不替代医生或注册营养师建议。'
 
-mmx --region cn --api-key "$MINIMAX_API_KEY" image generate \
+mmx image generate \
   --prompt "$PROMPT" \
   --width 1024 --height 1024 \
   --out generated/minimax-nutrition.png \
@@ -186,7 +193,7 @@ Use `--aspect-ratio 1:1` instead of explicit width/height when dimensions are no
 file generated/minimax-nutrition.png
 ```
 
-If MiniMax returns quota/subscription errors, do not loop retries. Switch to Codex imagegen, OpenAI Images API, or Pillow fallback. If exact Chinese text or numbers are wrong, simplify the prompt or render exact text/data with Pillow.
+If MiniMax returns `invalid api key`, first check region/auth/backend; do not assume quota is the problem. If it returns quota/subscription errors after auth is verified, do not loop retries; switch to Codex imagegen, OpenAI Images API, or Pillow fallback. MiniMax can produce attractive layouts, but Chinese text and exact numbers may be garbled; for publication, generate the visual background with MiniMax and render the exact Chinese/text/data layer with Pillow/SVG/HTML, or use the deterministic renderer directly.
 
 ## Codex CLI built-in imagegen route
 

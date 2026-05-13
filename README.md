@@ -43,20 +43,20 @@ Nutrition visuals should be educational unless a qualified professional supplied
 ## MiniMax CLI imagegen example
 
 ```bash
-set -a
-[ -f ~/.lingtai-tui/.env ] && . ~/.lingtai-tui/.env
-set +a
-: "${MINIMAX_API_KEY:?MINIMAX_API_KEY missing}"
+# Prefer mmx's own config/auth. Do not blindly reuse a LingTai LLM preset key.
+mmx config show --output json
+mmx auth status --output json
+mmx quota show --output json
 
 mkdir -p generated
-mmx --region cn --api-key "$MINIMAX_API_KEY" image generate \
+mmx image generate \
   --prompt '一张方形中文营养学科普信息图，主题：早餐怎么搭配更稳。干净温暖的微信健康科普卡片风格，高对比度，可读中文标题。包含三块：高纤维蔬果、优质蛋白、慢碳水。页脚：科普示意，不替代医生或注册营养师建议。' \
   --width 1024 --height 1024 \
   --out generated/minimax-nutrition.png \
   --non-interactive --output json --timeout 300
 ```
 
-If MiniMax reports `usage limit exceeded` or `no active token plan subscription`, switch to Codex/OpenAI/Pillow rather than retrying.
+Only pass `--api-key`/`--region` when you know the key belongs to the MiniMax image API and which region it uses. If MiniMax reports `invalid api key`, check backend/region first. If it reports `usage limit exceeded` or `no active token plan subscription` after auth is verified, switch to Codex/OpenAI/Pillow rather than retrying. MiniMax layouts can look good, but exact Chinese text may be garbled; use Pillow/SVG/HTML for the final text layer when accuracy matters.
 
 ## Codex CLI imagegen example
 
