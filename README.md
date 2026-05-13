@@ -9,6 +9,7 @@ The key workflow is **consultative**: before generating, the agent asks the huma
 - `SKILL.md` — agent playbook and decision tree.
 - `scripts/generate_gpt_image.py` — OpenAI Images API fallback for GPT image generation.
 - `scripts/render_nutrition_infographic.py` — deterministic Pillow renderer for exact/reproducible charts.
+- `scripts/compose_hybrid_overlay.py` — overlay exact Chinese text/cards on a no-text AI-generated background.
 - `assets/demo-balanced-plate.json` — demo structured spec.
 - `assets/demo-balanced-plate.png` — deterministic demo output.
 
@@ -57,6 +58,26 @@ mmx image generate \
 ```
 
 Only pass `--api-key`/`--region` when you know the key belongs to the MiniMax image API and which region it uses. If MiniMax reports `invalid api key`, check backend/region first. If it reports `usage limit exceeded` or `no active token plan subscription` after auth is verified, switch to Codex/OpenAI/Pillow rather than retrying. MiniMax layouts can look good, but exact Chinese text may be garbled; use Pillow/SVG/HTML for the final text layer when accuracy matters.
+
+## Hybrid MiniMax background + deterministic Chinese text
+
+Best publication workflow when MiniMax is available:
+
+1. Ask MiniMax for a **no-text** background/layout only: blank cards, food illustration, no letters, no numbers, no logo, no watermark.
+2. Render exact Chinese copy/data/disclaimer with the local overlay script.
+
+```bash
+mmx image generate \
+  --prompt 'Square nutrition poster background only. Warm cream and fresh green palette. Healthy breakfast plate illustration. Blank rounded white cards. No text, no letters, no numbers, no logo, no watermark, lots of empty space for later typography overlay.' \
+  --width 1024 --height 1024 \
+  --prompt-optimizer \
+  --out generated/minimax-layout-no-text.png \
+  --non-interactive --output json --timeout 300
+
+python3 scripts/compose_hybrid_overlay.py \
+  --background generated/minimax-layout-no-text.png \
+  --out generated/hybrid-minimax-text-overlay.png
+```
 
 ## Codex CLI imagegen example
 

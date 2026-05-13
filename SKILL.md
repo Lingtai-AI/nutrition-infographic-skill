@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via available backends such as MiniMax CLI, Codex built-in imagegen, OpenAI Images API, or deterministic Pillow fallback.
-version: 1.4.2
+version: 1.5.0
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -195,6 +195,40 @@ file generated/minimax-nutrition.png
 ```
 
 If MiniMax returns `invalid api key`, first check region/auth/backend; do not assume quota is the problem. If it returns quota/subscription errors after auth is verified, do not loop retries; switch to Codex imagegen, OpenAI Images API, or Pillow fallback. MiniMax can produce attractive layouts, but Chinese text and exact numbers may be garbled; for publication, generate the visual background with MiniMax and render the exact Chinese/text/data layer with Pillow/SVG/HTML, or use the deterministic renderer directly.
+
+## Hybrid: MiniMax no-text background + deterministic text overlay
+
+This is the recommended way to combine MiniMax with publication-grade Chinese nutrition content.
+
+1. **Generate no-text visual layer.** Prompt MiniMax for background/layout only. Explicitly say: no text, no letters, no numbers, no logo, no watermark, blank cards, empty space for later typography.
+2. **Overlay exact content locally.** Use `scripts/compose_hybrid_overlay.py` to render Chinese title, cards, data, and disclaimer using local fonts.
+3. **Inspect.** Check both the visual layer and the final overlay. If the AI background contains pseudo-text, regenerate with a stricter no-text prompt or crop/cover it.
+
+Example:
+
+```bash
+mmx image generate \
+  --prompt 'Square 1024x1024 premium nutrition education poster background only. Warm cream and fresh green palette. A beautiful top-down healthy breakfast plate illustration. Four clean blank rounded white cards. No text, no letters, no numbers, no logo, no watermark, no pseudo-writing, lots of empty space for later typography overlay.' \
+  --width 1024 --height 1024 \
+  --prompt-optimizer \
+  --out generated/minimax-layout-no-text.png \
+  --non-interactive --output json --timeout 300
+
+python3 scripts/compose_hybrid_overlay.py \
+  --background generated/minimax-layout-no-text.png \
+  --out generated/hybrid-minimax-text-overlay.png
+```
+
+For custom copy:
+
+```bash
+python3 scripts/compose_hybrid_overlay.py --write-demo-spec /tmp/hybrid-spec.json
+# edit /tmp/hybrid-spec.json
+python3 scripts/compose_hybrid_overlay.py \
+  --background generated/minimax-layout-no-text.png \
+  --spec /tmp/hybrid-spec.json \
+  --out generated/custom-hybrid-card.png
+```
 
 ## Codex CLI built-in imagegen route
 
