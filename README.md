@@ -57,7 +57,7 @@ mmx image generate \
   --non-interactive --output json --timeout 300
 ```
 
-Only pass `--api-key`/`--region` when you know the key belongs to the MiniMax image API and which region it uses. If MiniMax reports `invalid api key`, check backend/region first. If it reports `usage limit exceeded` or `no active token plan subscription` after auth is verified, switch to Codex/OpenAI/Pillow rather than retrying. MiniMax layouts can look good, but exact Chinese text may be garbled; use Pillow/SVG/HTML for the final text layer when accuracy matters.
+Only pass `--api-key`/`--region` when you know the key belongs to the MiniMax image API and which region it uses. If multiple MiniMax keys/configs exist, ask the human which backend to spend before generating. If MiniMax reports `invalid api key`, check backend/region first. If it reports `usage limit exceeded` or `no active token plan subscription` after auth is verified, switch to Codex/OpenAI/Pillow rather than retrying. MiniMax layouts can look good, but exact Chinese text may be garbled; use Pillow/SVG/HTML for the final text layer when accuracy matters.
 
 ## Hybrid MiniMax background + deterministic Chinese text
 
@@ -65,6 +65,8 @@ Best publication workflow when MiniMax is available:
 
 1. Ask MiniMax for a **no-text** background/layout only: blank cards, food illustration, no letters, no numbers, no logo, no watermark.
 2. Render exact Chinese copy/data/disclaimer with the local overlay script.
+
+When evaluating a new backend or style, generate **two outputs**: a pure deterministic render and a MiniMax-hybrid render, then let the human choose.
 
 ```bash
 mmx image generate \

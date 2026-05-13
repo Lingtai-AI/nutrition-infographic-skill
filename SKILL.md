@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via available backends such as MiniMax CLI, Codex built-in imagegen, OpenAI Images API, or deterministic Pillow fallback.
-version: 1.5.0
+version: 1.5.1
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -85,11 +85,13 @@ Then choose sensible defaults for the rest and state them before generating.
 
 1. **Human provided a complete brief** → draft JSON spec or rich prompt and generate.
 2. **Human provided only a topic** → ask the minimal intake question; if they say “随便/默认”, proceed with defaults.
-3. **Publication-grade Chinese infographic / exact wording required** → use Pillow/SVG/HTML for the final text/data layer. AI image backends may create a background or illustration, but should not be trusted to render Chinese copy, numbers, units, or disclaimers.
-4. **Exact numbers/charts must be correct** → use the Pillow renderer first, or use AI image only for a decorative companion.
-5. **Polished editorial visual matters more than exact geometry** → use MiniMax/Codex/OpenAI image generation, then inspect text carefully.
-6. **No imagegen available / offline / reproducible draft needed** → use `scripts/render_nutrition_infographic.py`.
-7. **Medical personalization requested** → keep it educational, ask for professional constraints, include disclaimer; do not invent clinical advice.
+3. **MiniMax backend is available but ambiguous** → do not guess the key/region/backend. Ask the human to confirm which `mmx` config/key/region to use, or run `mmx config show`, `mmx auth status`, and `mmx quota show` and summarize the non-secret evidence before generating.
+4. **Human wants to compare quality / backend choice is uncertain** → generate both a pure deterministic version and a MiniMax-hybrid version, then show both for selection.
+5. **Publication-grade Chinese infographic / exact wording required** → use Pillow/SVG/HTML for the final text/data layer. AI image backends may create a background or illustration, but should not be trusted to render Chinese copy, numbers, units, or disclaimers.
+6. **Exact numbers/charts must be correct** → use the Pillow renderer first, or use AI image only for a decorative companion.
+7. **Polished editorial visual matters more than exact geometry** → use MiniMax/Codex/OpenAI image generation, then inspect text carefully.
+8. **No imagegen available / offline / reproducible draft needed** → use `scripts/render_nutrition_infographic.py`.
+9. **Medical personalization requested** → keep it educational, ask for professional constraints, include disclaimer; do not invent clinical advice.
 
 ## Default brief if the human says “你来定”
 
@@ -171,7 +173,7 @@ mmx image generate --help
 # mmx --region cn     --api-key "$MINIMAX_IMAGE_API_KEY" image generate ...
 ```
 
-Use `--region cn` for mainland image API keys and `--region global` (or no region flag) for international/token-plan keys. A region/key mismatch usually appears as `invalid api key`; exhausted or missing quota may appear as `usage limit exceeded` or `no active token plan subscription`. If `mmx quota show` lists `image-01` remaining quota, the image backend is likely configured correctly.
+Use `--region cn` for mainland image API keys and `--region global` (or no region flag) for international/token-plan keys. A region/key mismatch usually appears as `invalid api key`; exhausted or missing quota may appear as `usage limit exceeded` or `no active token plan subscription`. If `mmx quota show` lists `image-01` remaining quota, the image backend is likely configured correctly. When multiple keys/configs exist, ask the human which one to use before spending quota.
 
 ### Step 2 — generate an image
 
