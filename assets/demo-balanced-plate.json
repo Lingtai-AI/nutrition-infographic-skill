@@ -1,0 +1,27 @@
+{
+  "title": "均衡餐盘：一眼看懂营养比例",
+  "subtitle": "适合科普文章、课程讲义、健康管理报告的自动化信息图模板",
+  "theme": "green",
+  "plate": [
+    {"label": "蔬菜水果", "value": 50, "color": "green"},
+    {"label": "全谷物", "value": 25, "color": "yellow"},
+    {"label": "蛋白质", "value": 20, "color": "orange"},
+    {"label": "油脂坚果", "value": 5, "color": "blue"}
+  ],
+  "metrics": [
+    {"label": "膳食纤维", "value": "25+", "unit": "g/日", "note": "优先来自天然食物", "color": "green"},
+    {"label": "蛋白质", "value": "1.0", "unit": "g/kg", "note": "一般成人参考", "color": "orange"},
+    {"label": "饮水", "value": "1.5–2", "unit": "L/日", "note": "按活动量调整", "color": "blue"}
+  ],
+  "bars": [
+    {"label": "碳水供能", "value": 50, "target": 55, "unit": "%", "color": "yellow"},
+    {"label": "蛋白供能", "value": 20, "target": 20, "unit": "%", "color": "orange"},
+    {"label": "脂肪供能", "value": 30, "target": 30, "unit": "%", "color": "blue"}
+  ],
+  "tips": [
+    "每餐先放半盘蔬菜，再补蛋白质与主食。",
+    "全谷物、豆类、坚果能同时贡献纤维和微量营养素。",
+    "本图为通用科普，不替代个体化医学或营养咨询。"
+  ],
+  "footer": "LingTai nutrition-infographic demo · science communication only"
+}
