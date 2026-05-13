@@ -18,6 +18,19 @@ In Codex-enabled environments, use command-line `codex exec` to invoke the syste
 
 Use the Pillow renderer when exact chart proportions or reproducibility matter.
 
+## Install on a fresh LingTai project
+
+```bash
+git clone https://github.com/huangzesen/nutrition-infographic-skill.git
+mkdir -p .library/custom
+cp -R nutrition-infographic-skill .library/custom/nutrition-infographic
+# or: ln -s "$PWD/nutrition-infographic-skill" .library/custom/nutrition-infographic
+```
+
+Then refresh the agent so the skill catalog is rescanned. The new agent can read `SKILL.md` and follow the workflow without access to the original authoring chat history.
+
+For the polished route, the new machine needs command-line `codex` installed/authenticated and a Codex environment with the system imagegen skill / built-in `image_gen` capability. Without that, use the OpenAI API fallback or deterministic Pillow renderer.
+
 ## Safety
 
 Nutrition visuals should be educational unless a qualified professional supplied the constraints. Avoid disease-treatment claims, one-size-fits-all medical prescriptions, and unsupported promises. Include a disclaimer when appropriate.

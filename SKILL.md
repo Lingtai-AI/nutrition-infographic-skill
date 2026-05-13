@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
 description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via Codex built-in imagegen or deterministic Pillow fallback.
-version: 1.3.0
+version: 1.3.1
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -14,6 +14,21 @@ Recommended generation route in Codex environments: ask Codex CLI / Codex's buil
 ## Self-contained usage
 
 This repository is self-contained. When cloned, run commands from the repository root (the directory containing `SKILL.md`). Do not assume the skill lives at `.library/custom/nutrition-infographic`; examples below use relative paths such as `scripts/render_nutrition_infographic.py` and `assets/demo-balanced-plate.json`. If you copy this skill into LingTai's `.library/custom/` or `.library_shared/`, the same relative paths still work when your shell is inside the skill directory.
+
+### Installing on a new LingTai machine
+
+On a fresh computer or in a new LingTai project, clone the repo and copy or symlink it into the agent's skill catalog:
+
+```bash
+git clone https://github.com/huangzesen/nutrition-infographic-skill.git
+mkdir -p .library/custom
+cp -R nutrition-infographic-skill .library/custom/nutrition-infographic
+# or: ln -s "$PWD/nutrition-infographic-skill" .library/custom/nutrition-infographic
+```
+
+Then refresh the agent so the skill catalog is rescanned. After refresh, the agent only needs to read this `SKILL.md` to know the workflow. The chat history from the machine where the skill was authored is not required.
+
+Prerequisites for the polished route: command-line `codex` must be installed and authenticated, and the Codex environment must include the system imagegen skill / built-in `image_gen` capability. If not, use the OpenAI API fallback or the deterministic Pillow fallback below.
 
 ## When this applies
 
