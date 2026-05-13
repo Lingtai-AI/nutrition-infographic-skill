@@ -14,9 +14,13 @@ The key workflow is **consultative**: before generating, the agent asks the huma
 
 ## Recommended route
 
-In Codex-enabled environments, use command-line `codex exec` to invoke the system imagegen skill, then explicitly copy the generated PNG from `$CODEX_HOME/generated_images/...` to the requested output path. The repo is self-contained: examples use `scripts/...` and `assets/...` relative to the repo root, not a local `.library/custom/...` path.
+Use whichever image backend is available in the current environment:
 
-Use the Pillow renderer when exact chart proportions or reproducibility matter.
+- MiniMax CLI: `mmx image generate` when MiniMax key/quota is available.
+- Codex CLI: `codex exec` to invoke the system imagegen skill, then explicitly copy the generated PNG from `$CODEX_HOME/generated_images/...` to the requested output path.
+- Pillow renderer: deterministic fallback when exact chart proportions or reproducibility matter.
+
+The repo is self-contained: examples use `scripts/...` and `assets/...` relative to the repo root, not a local `.library/custom/...` path.
 
 ## Install on a fresh LingTai project
 
@@ -29,12 +33,30 @@ cp -R nutrition-infographic-skill .library/custom/nutrition-infographic
 
 Then refresh the agent so the skill catalog is rescanned. The new agent can read `SKILL.md` and follow the workflow without access to the original authoring chat history.
 
-For the polished route, the new machine needs command-line `codex` installed/authenticated and a Codex environment with the system imagegen skill / built-in `image_gen` capability. Without that, use the OpenAI API fallback or deterministic Pillow renderer.
+For a polished AI-image route, the new machine needs at least one working backend: MiniMax CLI (`mmx`) with key/quota, command-line `codex` with the system imagegen skill / built-in `image_gen` capability, or OpenAI Images API credentials. Without those, use the deterministic Pillow renderer.
 
 ## Safety
 
 Nutrition visuals should be educational unless a qualified professional supplied the constraints. Avoid disease-treatment claims, one-size-fits-all medical prescriptions, and unsupported promises. Include a disclaimer when appropriate.
 
+
+## MiniMax CLI imagegen example
+
+```bash
+set -a
+[ -f ~/.lingtai-tui/.env ] && . ~/.lingtai-tui/.env
+set +a
+: "${MINIMAX_API_KEY:?MINIMAX_API_KEY missing}"
+
+mkdir -p generated
+mmx --region cn --api-key "$MINIMAX_API_KEY" image generate \
+  --prompt '一张方形中文营养学科普信息图，主题：早餐怎么搭配更稳。干净温暖的微信健康科普卡片风格，高对比度，可读中文标题。包含三块：高纤维蔬果、优质蛋白、慢碳水。页脚：科普示意，不替代医生或注册营养师建议。' \
+  --width 1024 --height 1024 \
+  --out generated/minimax-nutrition.png \
+  --non-interactive --output json --timeout 300
+```
+
+If MiniMax reports `usage limit exceeded` or `no active token plan subscription`, switch to Codex/OpenAI/Pillow rather than retrying.
 
 ## Codex CLI imagegen example
 

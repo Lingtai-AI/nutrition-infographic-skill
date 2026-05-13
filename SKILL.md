@@ -1,7 +1,7 @@
 ---
 name: nutrition-infographic
-description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via Codex built-in imagegen or deterministic Pillow fallback.
-version: 1.3.1
+description: Generate nutrition/science infographic images through a consultative workflow: first ask the human what image they need (purpose, audience, topic, language, size, style, data/text, output channel), then generate via available backends such as MiniMax CLI, Codex built-in imagegen, OpenAI Images API, or deterministic Pillow fallback.
+version: 1.4.0
 tags: [python, nutrition, infographic, image-generation, workflow]
 ---
 
@@ -9,7 +9,7 @@ tags: [python, nutrition, infographic, image-generation, workflow]
 
 This skill creates nutrition/science infographic images. The **default workflow is consultative**: ask the human what kind of image they need before generating anything, unless they already supplied enough detail or explicitly asked for a demo.
 
-Recommended generation route in Codex environments: ask Codex CLI / Codex's built-in `imagegen` system skill to use the built-in `image_gen` tool, then copy the generated PNG into the requested project path. The deterministic Pillow renderer remains the fallback for exact chart geometry, repeatability, offline rendering, or fast drafts.
+Recommended generation route: use whichever image backend is actually available in the current environment. MiniMax CLI (`mmx image generate`) is a good first-party CLI option when a MiniMax key/quota is available; Codex CLI / Codex's built-in `imagegen` system skill is a good route in Codex-enabled environments; the deterministic Pillow renderer remains the fallback for exact chart geometry, repeatability, offline rendering, or fast drafts.
 
 ## Self-contained usage
 
@@ -28,7 +28,7 @@ cp -R nutrition-infographic-skill .library/custom/nutrition-infographic
 
 Then refresh the agent so the skill catalog is rescanned. After refresh, the agent only needs to read this `SKILL.md` to know the workflow. The chat history from the machine where the skill was authored is not required.
 
-Prerequisites for the polished route: command-line `codex` must be installed and authenticated, and the Codex environment must include the system imagegen skill / built-in `image_gen` capability. If not, use the OpenAI API fallback or the deterministic Pillow fallback below.
+Prerequisites for polished AI-image routes: at least one image backend must be installed/authenticated and have quota, such as MiniMax CLI (`mmx`) or command-line `codex` with the system imagegen skill / built-in `image_gen` capability. If no AI-image backend is available, use the OpenAI API fallback when credentials exist, or the deterministic Pillow fallback below.
 
 ## When this applies
 
@@ -135,12 +135,58 @@ The Pillow fallback uses the original subset: `title`, `subtitle`, `theme`, `bac
 ## Procedure
 
 1. **Clarify the brief.** Ask for missing essentials. If the human says to proceed, write down the assumptions.
-2. **Choose route.** Use Codex built-in imagegen for polished visuals; Pillow for exact/reproducible charts; OpenAI API fallback only when explicitly needed.
+2. **Choose route.** Prefer an available polished image backend (MiniMax CLI or Codex built-in imagegen); use Pillow for exact/reproducible charts; use OpenAI API fallback only when explicitly needed and credentials exist.
 3. **Draft a spec/prompt.** Preserve exact numbers and wording. Keep claims conservative. Add source/disclaimer text when appropriate.
 4. **Generate.** Save the PNG to a stable output path under the project or requested destination.
 5. **Inspect.** Check legibility, label overlap, text language, numerical consistency, and whether unsupported medical claims slipped in.
 6. **Iterate.** If text or numbers are wrong in GPT image output, simplify the prompt/spec or switch to Pillow for the data layer.
 7. **Deliver.** Send or attach the image on the same channel where the request arrived if possible, and mention assumptions used.
+
+## MiniMax CLI imagegen route
+
+Use this when the environment has the official MiniMax CLI (`mmx`) installed, authenticated, and with available image-generation quota. This route is useful when you want the skill to work outside Codex-specific environments.
+
+### Step 1 — check CLI and auth
+
+```bash
+command -v mmx >/dev/null || npm install -g mmx-cli
+mmx --help
+mmx image generate --help
+```
+
+If the key is in `~/.lingtai-tui/.env`, export it without committing it:
+
+```bash
+set -a
+[ -f ~/.lingtai-tui/.env ] && . ~/.lingtai-tui/.env
+set +a
+: "${MINIMAX_API_KEY:?MINIMAX_API_KEY missing}"
+```
+
+For mainland MiniMax keys, pass `--region cn`. For international keys, omit it or pass `--region global`. A region/key mismatch usually appears as `invalid api key`; exhausted or missing quota may appear as `usage limit exceeded` or `no active token plan subscription`.
+
+### Step 2 — generate an image
+
+```bash
+mkdir -p generated
+PROMPT='一张方形中文营养学科普信息图，主题：早餐怎么搭配更稳。干净温暖的微信健康科普卡片风格，高对比度，可读中文标题。包含三块：高纤维蔬果、优质蛋白、慢碳水。页脚：科普示意，不替代医生或注册营养师建议。'
+
+mmx --region cn --api-key "$MINIMAX_API_KEY" image generate \
+  --prompt "$PROMPT" \
+  --width 1024 --height 1024 \
+  --out generated/minimax-nutrition.png \
+  --non-interactive --output json --timeout 300
+```
+
+Use `--aspect-ratio 1:1` instead of explicit width/height when dimensions are not important. Use `--prompt-optimizer` for rough prompts; avoid it when exact wording/numbers matter.
+
+### Step 3 — inspect and fallback if needed
+
+```bash
+file generated/minimax-nutrition.png
+```
+
+If MiniMax returns quota/subscription errors, do not loop retries. Switch to Codex imagegen, OpenAI Images API, or Pillow fallback. If exact Chinese text or numbers are wrong, simplify the prompt or render exact text/data with Pillow.
 
 ## Codex CLI built-in imagegen route
 
